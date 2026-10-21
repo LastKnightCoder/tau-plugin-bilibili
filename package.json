@@ -1,6 +1,6 @@
 {
   "name": "tau-plugin-bilibili",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "repository": {
@@ -22,8 +22,8 @@
     "install:local": "node install-local.mjs"
   },
   "dependencies": {
-    "@tau/plugins": "npm:@xiongtao.xt/tau-plugins@0.22.0",
-    "@tau/ui": "npm:@xiongtao.xt/tau-ui@0.1.1",
+    "@tau/plugins": "npm:@xiongtao.xt/tau-plugins@0.30.0",
+    "@tau/ui": "npm:@xiongtao.xt/tau-ui@0.2.0",
     "qrcode-generator": "2.0.4",
     "react": "19.2.0",
     "react-dom": "19.2.0"
