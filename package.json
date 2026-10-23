@@ -22,7 +22,7 @@
     "install:local": "node install-local.mjs"
   },
   "dependencies": {
-    "@tau/plugins": "npm:@xiongtao.xt/tau-plugins@0.36.0",
+    "@tau/plugins": "npm:@xiongtao.xt/tau-plugins@0.37.0",
     "@tau/ui": "npm:@xiongtao.xt/tau-ui@0.4.0",
     "qrcode-generator": "2.0.4",
     "react": "19.2.0",
