@@ -4,10 +4,10 @@
   "description": "粘贴 Bilibili 视频链接即可添加到笔记、白板和视频笔记，支持扫码登录选择更高清晰度。",
   "categories": ["video"],
   "keywords": ["Bilibili", "B站", "视频"],
-  "version": "0.2.4",
+  "version": "0.2.5",
   "targets": {
     "desktop": {
-      "minAppVersion": "0.59.4"
+      "minAppVersion": "0.60.2"
     }
   }
 }
