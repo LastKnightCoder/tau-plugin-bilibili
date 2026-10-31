@@ -1,4 +1,5 @@
 /** Bilibili Web 接口：视频信息、清晰度、播放地址与扫码登录。网络请求一律经插件 fetch。 */
+import type { VideoCaptions } from "@tau/plugins";
 
 export interface Credentials {
   SESSDATA?: string;
@@ -220,7 +221,8 @@ export async function getPlayUrl(
   const data = await getJson<PlayData>(fetcher, playUrl(bvid, cid, quality), credentials, signal);
   const video = data.dash?.video ?? [];
   const audio = [...(data.dash?.audio ?? [])].sort((a, b) => b.id - a.id);
-  if (!video.length || !audio.length) throw new Error("视频流不可用，可能需要大会员权限或视频已失效");
+  if (!video.length || !audio.length)
+    throw new Error("视频流不可用，可能需要大会员权限或视频已失效");
   const matching = video.filter(stream => stream.id === quality);
   return {
     video:
@@ -228,6 +230,63 @@ export async function getPlayUrl(
       video[0].baseUrl,
     audio: (await firstAvailable(fetcher, candidates(audio), signal)) ?? audio[0].baseUrl,
   };
+}
+
+export async function getCaptions(
+  fetcher: Fetch,
+  bvid: string,
+  cid: string,
+  credentials: Credentials,
+  signal: AbortSignal
+): Promise<VideoCaptions | null> {
+  const params = new URLSearchParams({ bvid, cid });
+  const data = await getJson<{
+    subtitle?: { subtitles?: { lan: string; subtitle_url: string }[] };
+  }>(fetcher, `${API}/x/player/wbi/v2?${params}`, credentials, signal);
+  const tracks = (data.subtitle?.subtitles ?? [])
+    .filter(
+      track =>
+        typeof track.lan === "string" &&
+        typeof track.subtitle_url === "string" &&
+        track.subtitle_url
+    )
+    .sort((a, b) => {
+      const rank = (language: string) =>
+        (language.startsWith("ai-") ? 2 : 0) + (language.includes("zh") ? 0 : 1);
+      return rank(a.lan) - rank(b.lan);
+    });
+  for (const track of tracks) {
+    const url = new URL(track.subtitle_url, WEB);
+    if (url.protocol !== "https:") continue;
+    const response = await fetcher(url.href, { headers: STREAM_HEADERS, signal });
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new Error(`Bilibili 字幕读取失败：HTTP ${response.status}`);
+    }
+    const body = ((await response.json()) as { body?: unknown }).body;
+    if (!Array.isArray(body)) continue;
+    const segments = body
+      .flatMap(line => {
+        if (
+          !line ||
+          typeof line.content !== "string" ||
+          !Number.isFinite(line.from) ||
+          !Number.isFinite(line.to) ||
+          line.from < 0 ||
+          line.to <= line.from
+        )
+          return [];
+        const text = line.content.trim();
+        return text
+          ? [{ text, start: Math.round(line.from * 1000), end: Math.round(line.to * 1000) }]
+          : [];
+      })
+      .filter(segment => segment.end > segment.start)
+      .sort((a, b) => a.start - b.start);
+    signal.throwIfAborted();
+    if (segments.length) return { language: track.lan.replace(/^ai-/, ""), segments };
+  }
+  return null;
 }
 
 export async function checkLogin(fetcher: Fetch, credentials: Credentials): Promise<UserInfo> {

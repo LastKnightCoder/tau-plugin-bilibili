@@ -129,3 +129,50 @@ it("扫码成功后从第一跳 Set-Cookie 取得凭据，不跟随跳转", asyn
   ).resolves.toEqual({ SESSDATA: "abc", bfe_id: "xyz" });
   expect(fetcher.mock.calls[0][1]).toMatchObject({ redirect: "manual" });
 });
+
+it("读取分 P 字幕，人工轨优先，转换为毫秒且不向字幕 CDN 发送 Cookie", async () => {
+  const fetcher = vi.fn<typeof fetch>(async input => {
+    if (String(input).includes("/x/player/wbi/v2"))
+      return json({
+        subtitle: {
+          subtitles: [
+            { lan: "ai-zh", subtitle_url: "//cdn.test/auto" },
+            { lan: "zh-CN", subtitle_url: "//cdn.test/manual" },
+          ],
+        },
+      });
+    expect(String(input)).toBe("https://cdn.test/manual");
+    return new Response(
+      JSON.stringify({
+        body: [
+          { from: 0.125, to: 1.75, content: " 人工字幕 " },
+          { from: 2, to: 1, content: "无效" },
+          { from: 2, to: 3, content: " " },
+        ],
+      })
+    );
+  });
+  const instance = createBilibiliInstance({ SESSDATA: "sess" }, fetcher);
+  const scoped = signal();
+  await expect(instance.getCaptions!({ bvid: "BV1", cid: "200" }, scoped)).resolves.toEqual({
+    language: "zh-CN",
+    segments: [{ text: "人工字幕", start: 125, end: 1750 }],
+  });
+  expect(String(fetcher.mock.calls[0][0])).toContain("cid=200");
+  expect(fetcher.mock.calls[0][1]).toMatchObject({
+    signal: scoped,
+    headers: { Cookie: "SESSDATA=sess" },
+  });
+  expect(fetcher.mock.calls[1][1]?.headers).not.toHaveProperty("Cookie");
+});
+
+it("没有字幕或只有空字幕时返回 null，读取失败保留错误", async () => {
+  const fetcher = vi.fn<typeof fetch>(async () => json({ subtitle: { subtitles: [] } }));
+  await expect(
+    createBilibiliInstance({}, fetcher).getCaptions!({ bvid: "BV1", cid: "1" }, signal())
+  ).resolves.toBeNull();
+  fetcher.mockResolvedValue(new Response(null, { status: 403 }));
+  await expect(
+    createBilibiliInstance({}, fetcher).getCaptions!({ bvid: "BV1", cid: "1" }, signal())
+  ).rejects.toThrow("HTTP 403");
+});

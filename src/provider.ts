@@ -3,6 +3,7 @@ import {
   QUALITY_LABELS,
   STREAM_HEADERS,
   getPlayUrl,
+  getCaptions,
   getVideoInfo,
   isBilibiliUrl,
   type Credentials,
@@ -89,6 +90,10 @@ export function createBilibiliInstance(value: JsonValue, fetcher: Fetch): VideoI
         video: { url: urls.video, headers: STREAM_HEADERS },
         audio: { url: urls.audio, headers: STREAM_HEADERS },
       };
+    },
+    getCaptions(ref, signal) {
+      const { bvid, cid } = readRef(ref);
+      return getCaptions(fetcher, bvid, cid, config, signal);
     },
   };
 }

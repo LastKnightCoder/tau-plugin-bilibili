@@ -1,12 +1,12 @@
 # 兼容性与开发验证
 
-当前依赖 SDK 0.47.0、UI 0.5.0；插件版本与最低客户端版本以 manifest.json 为准。使用格式 3，仅声明 desktop；保留插件 ID、原有数据字段与功能，统一安装包协议，不把新 SDK 版本等同于移动平台支持。
+当前依赖 SDK 0.52.0、UI 0.5.0；插件版本与最低客户端版本以 manifest.json 为准。使用格式 3，仅声明 desktop；保留插件 ID、原有数据字段与功能，统一安装包协议，不把新 SDK 版本等同于移动平台支持。
 
 ## 平台边界
 
 依赖 video、原生网络或媒体提取服务与领域设置，移动宿主尚未接入这些作者 API。移动应用自己的内置服务与插件提供方协议不同，SDK 升级不会自动开放这些能力。
 
-跨端能力以[官方 API 支持矩阵](https://github.com/LastKnightCoder/tau-plugin-template/blob/main/docs/api-support.md)为准。未来适配仍使用同一插件 ID 与更高版本，节点 type 和历史数据保持兼容；不生成另一个 Android 专用插件。
+跨端能力以[官方 API 支持矩阵](https://github.com/LastKnightCoder/tau-plugin-template/blob/main/docs/portability.md)为准。未来适配仍使用同一插件 ID 与更高版本，节点 type 和历史数据保持兼容；不生成另一个 Android 专用插件。
 
 ## 验证与发布
 
