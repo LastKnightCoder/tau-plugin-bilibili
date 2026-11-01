@@ -137,7 +137,7 @@ async function resolveVideoPage(
   const html = (await response.text()).replace(/\\u002F/g, "/").replace(/\\\//g, "/");
   const match = html.match(/(?:https?:)?\/\/www\.bilibili\.com\/video\/(?:BV[0-9A-Za-z]+|av\d+)/i);
   if (match) return match[0].startsWith("//") ? `https:${match[0]}` : match[0];
-  throw new Error("无法从链接中找到 Bilibili 视频，目前支持视频页与 b23.tv 短链");
+  throw new Error("无法从链接中找到 Bilibili 视频，请粘贴视频页链接或 b23.tv 短链");
 }
 
 interface ViewData {
