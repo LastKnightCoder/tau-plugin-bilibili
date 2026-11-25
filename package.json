@@ -1,6 +1,7 @@
 {
   "name": "tau-plugin-bilibili",
   "version": "0.2.7",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "repository": {
