@@ -1,7 +1,7 @@
 import { buildPortablePluginManifest, PORTABLE_SHARED_MODULES } from "@tau/plugins/portable";
 import { build } from "esbuild";
 import AdmZip from "adm-zip";
-import { mkdir, readFile, writeFile, mkdtemp, rename, rm } from "node:fs/promises";
+import { lstat, mkdir, readdir, readFile, writeFile, mkdtemp, rename, rm } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID, createHash } from "node:crypto";
 
@@ -18,6 +18,26 @@ try {
   if (typeof manifest.description !== "string" || !manifest.description.trim())
     throw new Error("manifest.description 必须为非空简介");
   await writeFile(path.join(staging, "README.md"), readme);
+  const localizedReadmes = new Map();
+  for (const entry of await readdir(".", { withFileTypes: true })) {
+    const match = /^README\.([A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)\.md$/.exec(entry.name);
+    if (!match) continue;
+    if (match[1].length > 35) throw new Error(`多语言说明语言标识无效：${entry.name}`);
+    let locale;
+    try {
+      locale = new Intl.Locale(match[1]).toString();
+    } catch {
+      throw new Error(`多语言说明语言标识无效：${entry.name}`);
+    }
+    if ((await lstat(entry.name)).isSymbolicLink() || !entry.isFile())
+      throw new Error(`多语言说明必须是普通文件：${entry.name}`);
+    if (localizedReadmes.has(locale))
+      throw new Error(`多语言说明存在重复语言：${entry.name}`);
+    const content = await readFile(entry.name, "utf8");
+    if (!content.trim()) throw new Error(`${entry.name} 不能为空`);
+    localizedReadmes.set(locale, entry.name);
+    await writeFile(path.join(staging, `README.${locale}.md`), content);
+  }
   for (const name of ["LICENSE", "CHANGELOG.md"]) {
     try {
       await writeFile(path.join(staging, name), await readFile(name));
@@ -56,14 +76,19 @@ try {
     integrity[file] = createHash("sha256")
       .update(await readFile(path.join(staging, file)))
       .digest("hex");
+  const builtManifest = buildPortablePluginManifest(manifest, {
+    main: "main.js",
+    integrity,
+    ...(styles ? { styles: "main.css" } : {}),
+  });
   await writeFile(
     path.join(staging, "manifest.json"),
     JSON.stringify(
-      buildPortablePluginManifest(manifest, {
-        main: "main.js",
-        integrity,
-        ...(styles ? { styles: "main.css" } : {}),
-      }),
+      {
+        ...builtManifest,
+        ...(!builtManifest.i18n && manifest.i18n ? { i18n: manifest.i18n } : {}),
+        ...(!builtManifest.locales && manifest.locales ? { locales: manifest.locales } : {}),
+      },
       null,
       2
     )

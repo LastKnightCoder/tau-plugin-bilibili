@@ -4,10 +4,21 @@
   "description": "粘贴 Bilibili 视频链接即可添加到笔记、白板和视频笔记，支持扫码登录选择更高清晰度。",
   "categories": ["video"],
   "keywords": ["Bilibili", "B站", "视频"],
-  "version": "0.2.7",
+  "locales": ["zh-CN", "zh-TW", "en-US"],
+  "i18n": {
+    "zh-TW": {
+      "description": "貼上 Bilibili 影片連結即可加入到記事、白板和影片筆記，支援掃碼登入選擇更高畫質。",
+      "keywords": ["Bilibili", "B站", "影片"]
+    },
+    "en-US": {
+      "description": "Paste a Bilibili video link to add it to notes, whiteboards, and Video Notes, with QR code sign-in for higher quality.",
+      "keywords": ["Bilibili", "video"]
+    }
+  },
+  "version": "0.2.8",
   "targets": {
     "desktop": {
-      "minAppVersion": "0.60.2"
+      "minAppVersion": "0.68.0"
     }
   }
 }
